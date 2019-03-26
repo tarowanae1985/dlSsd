@@ -87,8 +87,6 @@ class VideoTest(object):
             "trying to open a webcam, make sure you video_path is an integer!"))
         
         # Compute aspect ratio of video     
-        # vidw = vid.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
-        # vidh = vid.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)
         vidw = vid.get(cv2.CAP_PROP_FRAME_WIDTH)
         vidh = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
         vidar = vidw/vidh
@@ -158,8 +156,9 @@ class VideoTest(object):
                     cv2.rectangle(to_draw, (xmin, ymin), (xmax, ymax), 
                                   self.class_colors[class_num], 2)
                     text = self.class_names[class_num] + " " + ('%.2f' % top_conf[i])
+
+                    # 推定した食材をローカルのjsonファイルに保存する
                     self.detectedClassNames.add(self.class_names[class_num])
-                    # print(self.detectedClassNames)
                     ingredientsData = {"ingredients":list(self.detectedClassNames)}
                     with open('ingredients.json', 'w') as f:
                         json.dump(ingredientsData, f, ensure_ascii=False)

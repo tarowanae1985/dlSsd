@@ -14,16 +14,10 @@ import webbrowser
 # 素材数の増加カウンタ
 ingredientsNum = 0
 # レシピAPIレスポンス
-json_body = ''
+recipeJson = ''
 
 root = Tk()
-root.title("HOME")
-
-if os.path.exists("ingredients.json"):
-    os.remove("ingredients.json")
-
-# take_img = "python getImage.py"# 写真撮影スクリプト
-take_img = "python videotest_example.py"# 写真撮影スクリプト
+root.title("recipe")
 
 canvas = Canvas(root, height = 350, width = 350, relief = RIDGE, bd = 2)
 canvas.pack()
@@ -32,21 +26,25 @@ var.set('Now Loading')
 StringLabel = Label(root, textvariable = var)
 StringLabel.pack()
 
+# 食材情報が記載されたローカルjsonファイルを削除（初期化）
+if os.path.exists("ingredients.json"):
+    os.remove("ingredients.json")
+
+# サブプロセスでSSDで物体検出＋食材情報をローカルJSONファイルに追記させる
+take_img = "python videotest_example.py"
 subprocess.Popen(take_img.split())
 
 
 def openLink(url):
-# def openLink():
     webbrowser.open(url)
-    # return 0
 
-# 写真更新
-# 30秒毎に写真を撮影しcanvasの写真を更新させたい
+# tkinterによるレシピ情報の提示
+# 4秒ごとにループ実行
 def change_flag():
     global ingredientsNum
-    global json_body
+    global recipeJson
 
-    # json内の食材データをロード
+    # ローカルのjsonファイル内の食材データをロード
     if os.path.exists("ingredients.json"):
         with open('ingredients.json') as f:
             jsn = json.load(f)
@@ -54,41 +52,42 @@ def change_flag():
         # 食材が増えた時だけレシピAPIリクエスト(APIリクエスト数に分間5回までという制限があるため)
         if ingredientsNum < len(jsn["ingredients"]):
             ingredientsNum = len(jsn["ingredients"])
-            # ランダムに食材を最大２件ピックアップしてレシピをAPI取得
-            newingredientsList = random.choices(jsn["ingredients"],k=2)
-            print(f'newingredientsList={newingredientsList}')
-            json_body = getRecipeJson(newingredientsList)
+            # ランダムに食材を２件ピックアップしてレシピをAPIでレシピjsonを取得
+            randomIngredientsList = random.choices(jsn["ingredients"],k=2)
+            print(f'randomIngredientsList={randomIngredientsList}')
+            tmp = getRecipeJson(randomIngredientsList)
+            # 1個以上レシピが返ってくればレシピjsonを更新
+            if tmp["count"] > 0:
+                recipeJson = tmp
 
-        #jsonレスポンスからレシピをランダムで１つチョイス
-        randomRecipe = random.choices(json_body["hits"],k=1)
+        # レシピjsonからランダムで１つレシピをチョイス
+        randomRecipe = random.choices(recipeJson["hits"],k=1)
 
+        # jsonから表示用にレシピ名、レシピ詳細URL、レシピサムネイル画像を取得
         recipeName = randomRecipe[0]['recipe']['label']
         recipe_url = randomRecipe[0]['recipe']['url']
         image_url = randomRecipe[0]['recipe']['image']
+
+        # tkinterがjpgそのままだと表示できないらしいのでpng変換を経由して表示
         urllib.request.urlretrieve(image_url, "recipe.jpg")
         img = Image.open('./recipe.jpg')
         img.save('./recipe.png', 'png')
-
-        # Static1 = tkinter.Label(text=recipeName)
-        # Static1.pack()
-        var.set(recipeName)
-
         canvas.photo = PhotoImage(file = 'recipe.png')
         canvas.create_image(175, 180, image = canvas.photo)
 
-        btn = tkinter.Button(root, text='レシピを開く', command= lambda: openLink(recipe_url))
-        btn.place(x=150, y=300)
-        # btn.pack(fill = 'x' ,side = 'top')
+        # レシピ名更新
+        var.set(recipeName)
 
-        # button_draw = tkinter.Button(root, text=u'レシピを開く',width=30)
-        # # button_draw.bind("<Button-1>",command= lambda: openLink(recipe_url))
-        # button_draw.bind("<Button-1>",command=openLink)
-        # button_draw.place(x=75,y=400)
+        # クリックでレシピ詳細ページが開くボタンを設置
+        btn = tkinter.Button(root, text='レシピを開く', command= lambda: openLink(recipe_url))
+        btn.place(x=150, y=320)
 
     root.after(4000,change_flag)
 
 
-def getRecipeJson(ingredients):    
+# "edamam"という海外のレシピ情報サービス。無料会員登録でAPI利用可能。
+# 無料版は分間5リクエスト、月間5000リクエストまで等制限有り。
+def getRecipeJson(ingredients):
     param = {
         'q'      :','.join(ingredients),
         'app_id' :'1248d21d',

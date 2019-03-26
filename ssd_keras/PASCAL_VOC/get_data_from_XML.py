@@ -6,7 +6,7 @@ class XML_preprocessor(object):
 
     def __init__(self, data_path):
         self.path_prefix = data_path
-        self.num_classes = 6
+        self.num_classes = 7
         self.data = dict()
         self._preprocess_XML()
 
@@ -51,21 +51,15 @@ class XML_preprocessor(object):
             one_hot_vector[4] = 1
         elif name == 'shimeji':
             one_hot_vector[5] = 1
+        elif name == 'onion':
+            one_hot_vector[6] = 1
         else:
             print('unknown label: %s' %name)
 
         return one_hot_vector
 
 ## example on how to use it
-# import pickle
-# data = XML_preprocessor('VOC2007/Annotations/').data
-# pickle.dump(data,open('VOC2007.p','wb'))
 import pickle
-# data = XML_preprocessor('VID_20190306_173014_output/Annotations/').data
-# pickle.dump(data,open('desk2.pkl','wb'))
-data = XML_preprocessor('VID_20190310_230824_output/Annotations/').data
-# pickle.dump(data,open('desk3.pkl','wb'))
-# import pickle
-# data = XML_preprocessor('INOUE\Annotations\\').data
-pickle.dump(data,open('Refrigerator.pkl','wb'))
+data = XML_preprocessor('alldata/Annotations/').data
+pickle.dump(data,open('RefrigeratorAll.pkl','wb'))
 
