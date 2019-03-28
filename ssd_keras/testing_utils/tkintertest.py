@@ -10,11 +10,13 @@ import os
 import os.path
 import random
 import webbrowser
+import time
 
 # 素材数の増加カウンタ
 ingredientsNum = 0
 # レシピAPIレスポンス
 recipeJson = ''
+preApiReqTime = 0
 
 root = Tk()
 root.title("recipe")
@@ -43,14 +45,17 @@ def openLink(url):
 def change_flag():
     global ingredientsNum
     global recipeJson
+    global preApiReqTime
 
     # ローカルのjsonファイル内の食材データをロード
     if os.path.exists("ingredients.json"):
         with open('ingredients.json') as f:
             jsn = json.load(f)
 
-        # 食材が増えた時だけレシピAPIリクエスト(APIリクエスト数に分間5回までという制限があるため)
-        if ingredientsNum < len(jsn["ingredients"]):
+        # 食材が増えた時 and 前回APIリクエストから12秒以上経ってたら
+        # レシピAPIリクエスト(APIリクエスト数に分間5回までという制限があるため)
+        if ingredientsNum < len(jsn["ingredients"]) and (time.time() - preApiReqTime) > 12:
+            preApiReqTime = time.time()
             ingredientsNum = len(jsn["ingredients"])
             # ランダムに食材を２件ピックアップしてレシピをAPIでレシピjsonを取得
             randomIngredientsList = random.choices(jsn["ingredients"],k=2)
@@ -81,6 +86,7 @@ def change_flag():
         # クリックでレシピ詳細ページが開くボタンを設置
         btn = tkinter.Button(root, text='レシピを開く', command= lambda: openLink(recipe_url))
         btn.place(x=150, y=320)
+
 
     root.after(4000,change_flag)
 
